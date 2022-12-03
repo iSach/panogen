@@ -13,12 +13,20 @@ class MotionDetector:
 		"""
 		in: frame (OpenCV)
 
-		out: list of bounding boxes
+		out: A dictionary with the mask, and the bounding boxes of the detected objects
 		"""
 		res = self.model(frame).xyxy[0]
 		res = res[(res[:, 5] == self.__BALL_CLASS) | (res[:, 5] == self.__PERSON_CLASS)]
+		
+		# Draw the mask
 		mask = np.zeros((720, 1280), dtype=np.uint8)
 		for box in res:
 			mask[int(box[1]):int(box[3]), int(box[0]):int(box[2])] = 1
+
+		# Transform the bounding boxes to a tensor.
+		# Remove 5th column in res tensor
+		bboxes = res[:, [0,1,2,3,5]]
+		person_boxes = bboxes[bboxes[:, 4] == self.__PERSON_CLASS]
+		ball_boxes = bboxes[bboxes[:, 4] == self.__BALL_CLASS]
 		
-		return mask
+		return {'mask': mask, 'person_boxes': person_boxes, 'ball_boxes': ball_boxes}
