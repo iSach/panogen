@@ -1,4 +1,7 @@
-data/
+data/img_5_1/
+data/img_5_2/
+data/ref_5_1/
+data/ref_5_2/
 *.pt
 *.mp4
 tests/
