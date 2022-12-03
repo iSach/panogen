@@ -5,6 +5,7 @@ data/ref_5_2/
 *.pt
 *.mp4
 tests/
+**.zip
 
 # Created by https://www.toptal.com/developers/gitignore/api/macos,windows,linux,python,jupyternotebooks,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=macos,windows,linux,python,jupyternotebooks,visualstudiocode

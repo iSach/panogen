@@ -1,10 +1,13 @@
 import torch
 import numpy as np
 
+MODELS = ('yolov5n', 'yolov5s', 'yolov5m', 'yolov5l', 'yolov5x')
+
 class MotionDetector:
-	def __init__(self):
+	def __init__(self, model='yolov5s'):
 		self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-		self.model = torch.hub.load('ultralytics/yolov5', 'yolov5n').to(self.device)
+		self.model = torch.hub.load('ultralytics/yolov5', model, verbose=False, skip_validation=True).to(self.device)
+		self.model_type = 'yolo'
 
 		self.__PERSON_CLASS = 0
 		self.__BALL_CLASS = 32
@@ -23,10 +26,6 @@ class MotionDetector:
 		for box in res:
 			mask[int(box[1]):int(box[3]), int(box[0]):int(box[2])] = 1
 
-		# Transform the bounding boxes to a tensor.
-		# Remove 5th column in res tensor
-		person_boxes = res[res[:, 5] == self.__PERSON_CLASS]
-		ball_boxes = res[res[:, 5] == self.__BALL_CLASS]
-		res = res[:, :5]
+		res[res[:, 5] == self.__BALL_CLASS, 5] = 1
 		
-		return {'mask': mask, 'person_boxes': person_boxes, 'ball_boxes': ball_boxes}
+		return {'mask': mask, 'boxes': res}

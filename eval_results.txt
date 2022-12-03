@@ -1,0 +1,53 @@
+gpu: 3080
+
+OBJECT DETECTION:
+
+* yolov5n
+    - Speed: 7.53ms (133fps)
+    - Inside mAP: 45.1%
+    - Inside mAP (person): 79.12%
+    - Inside mAP (ball): 11.09%
+    - Outside mAP: 48.4%
+    - Outside mAP (person): 91.85%
+    - Outside mAP (ball): 4.95%
+
+* yolov5s
+    - Speed: 7.68ms (130fps)
+    - Inside mAP: 58.55%
+    - Inside mAP (person): 88.39%
+    - Inside mAP (ball): 28.71%
+    - Outside mAP: 51.39%
+    - Outside mAP (person): 95.2%
+    - Outside mAP (ball): 7.59%
+
+* yolov5m
+    - Speed: 9.64ms (103.73fps)
+    - Inside mAP: 60.23%
+    - Inside mAP (person): 91.75%
+    - Inside mAP (ball): 28.71%
+    - Outside mAP: 54.26%
+    - Outside mAP (person): 95.66%
+    - Outside mAP (ball): 12.87%
+
+* yolov5l
+    - Speed: 11.74ms (85fps)
+    - Inside mAP: 61.53%
+    - Inside mAP (person): 91.91%
+    - Inside mAP (ball): 31.14%
+    - Outside mAP: 55.61%
+    - Outside mAP (person): 95.71%
+    - Outside mAP (ball): 15.51%
+
+* yolov5x
+    - Speed: 16.22ms (62fps)
+    - Inside mAP: 69.33%
+    - Inside mAP (person): 92.13%
+    - Inside mAP (ball): 46.53%
+    - Outside mAP: 53.46%
+    - Outside mAP (person): 96.04%
+    - Outside mAP (ball): 10.89%
+
+
+Qualitative notes:
+ * We should use a low confidence level on detection because we want more FPs over FNs.
+ * 
