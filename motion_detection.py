@@ -25,8 +25,8 @@ class MotionDetector:
 
 		# Transform the bounding boxes to a tensor.
 		# Remove 5th column in res tensor
-		bboxes = res[:, [0,1,2,3,5]]
-		person_boxes = bboxes[bboxes[:, 4] == self.__PERSON_CLASS]
-		ball_boxes = bboxes[bboxes[:, 4] == self.__BALL_CLASS]
+		person_boxes = res[res[:, 5] == self.__PERSON_CLASS]
+		ball_boxes = res[res[:, 5] == self.__BALL_CLASS]
+		res = res[:, :5]
 		
 		return {'mask': mask, 'person_boxes': person_boxes, 'ball_boxes': ball_boxes}
