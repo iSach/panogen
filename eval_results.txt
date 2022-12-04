@@ -1,5 +1,21 @@
 gpu: 3080
 
+yolov5s:
+* With rectangles
+Inside accuracy: 86.18%
+Outside accuracy: 98.65%
+Total accuracy: 92.42%
+
+* person rectangles, balls circles:
+Inside accuracy: 86.35%
+Outside accuracy: 98.66%
+Total accuracy: 92.51%
+
+* person ellipse, balls circle:
+Inside accuracy: 89.06%
+Outside accuracy: 99.0%
+Total accuracy: 94.03%
+
 OBJECT DETECTION:
 
 * yolov5n
@@ -50,4 +66,14 @@ OBJECT DETECTION:
 
 Qualitative notes:
  * We should use a low confidence level on detection because we want more FPs over FNs.
- * 
+ * Instance Segmentation way too slow even the best model will never fit for real-time, no need to compare
+ * We need to evaluate in real-time on Jetson what it gives, and try out different methods for the mask.
+ * Ball bounding box mask: can use a simple circle. For persons, either a rectangle, or an ellipse?
+ * Not enough data to train a new model only on the 2 classes which would be way faster
+ * models work on RGB by default, we need to compare RGB vs grayscale in accuracy
+     L-> Turning on RGB makes: * reading slower (about 2 times it seems)
+                               * mAP inside person decreases
+                               * mAP outside person same
+                               * mAP ball increases (x2) everywhere
+ * ellipse with person: will let hands go out so might not give a good mask for panorama
+ * Like for FP, we prefer masking too much than not enough, gain in accuracy maybe not needed.
