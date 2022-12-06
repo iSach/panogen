@@ -1,0 +1,25 @@
+[
+    {
+        "image_id": 0,
+        "bbox": [
+            6,
+            79,
+            196,
+            51
+        ],
+        "category_id": 2,
+        "score": 0.5
+    },
+    {
+        "image_id": 0,
+        "bbox": [
+            66,
+            189,
+            39,
+            198
+        ],
+        "category_id": 2,
+        "score": 0.5,
+        "distance": 3.2
+    }
+]
