@@ -36,32 +36,38 @@ nb = args.number
 
 
 def compute_homography(image1, image2, bff_match=False):
+    """
+    Detect and match features between image1 and image2
+    Using ORB as the detector
+    and homography to find objects
 
-    sift = cv2.SIFT_create(edgeThreshold=10, sigma=1.5, contrastThreshold=0.08)
-    
-    kp1, des1 = sift.detectAndCompute(image1, None)
-    kp2, des2 = sift.detectAndCompute(image2, None)
+    Returns: perspective transformation between two planes
 
-    # Brute force matching
-    bf = cv2.BFMatcher()
-    matches = bf.knnMatch(des1, trainDescriptors=des2, k=2)
+    """
+    # Initiate ORB
+    orb = cv2.ORB_create()
 
-    # Lowes Ratio
-    good_matches = []
-    for m, n in matches:
-        if m.distance < .75 * n.distance:
-            good_matches.append(m)
+    # Find keypoints and descriptor
+    kp1, des1 = orb.detectAndCompute(image1, None)
+    kp2, des2 = orb.detectAndCompute(image2, None)
 
-    src_pts = np.float32([kp1[m.queryIdx].pt for m in good_matches])\
-        .reshape(-1, 1, 2)
-    dst_pts = np.float32([kp2[m.trainIdx].pt for m in good_matches])\
-        .reshape(-1, 1, 2)
+    ## match descriptors and sort them in the order of their distance
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+    matches = bf.match(des1, des2)
+    matches = sorted(matches, key = lambda x:x.distance)
 
-    if len(src_pts) > 4:
-        H, mask = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5)
-    else:
-        H = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
-    return H
+    # Take the top N matches
+    N = 50
+    matches = matches[:N]
+
+    ## extract the matched keypoints
+    src_pts  = np.float32([kp1[m.queryIdx].pt for m in matches]).reshape(-1,1,2)
+    dst_pts  = np.float32([kp2[m.trainIdx].pt for m in matches]).reshape(-1,1,2)
+
+    ## find homography matrix and do perspective transform
+    M, _ = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
+
+    return M
 
 
 def warp_image(image, H):
@@ -93,8 +99,13 @@ def warp_image(image, H):
 
     return warped, (int(xmin), int(ymin))
 
+
+# https://gist.github.com/royshil/0b21e8e7c6c1f46a16db66c384742b2b
 def cylindrical_warp_image(img, H):
+    """
+    returns the cylindrical warp for a given image and intrinsics matrix H
     
+    """
     h, w = img.shape[:2]
     # pixel coordinates
     y_i, x_i = np.indices((h, w))
@@ -161,26 +172,19 @@ def create_mosaic(images, origins):
         total_width = max(total_width, spot[0]+image.shape[1])
         total_height = max(total_height, spot[1]+image.shape[0])
 
-    # print "height ", total_height
-    # print "width ", total_width
-
     # new frame of panorama
     stitch = np.zeros((total_height, total_width, 4), np.uint8)
 
     # stitch images into frame by order of distance
     for image in dist_sorted:
-        
+
         offset_y = image[0][1] + cent_y
         offset_x = image[0][0] + cent_x
         end_y = offset_y + image[1].shape[0]
         end_x = offset_x + image[1].shape[1]
-        
-        ####
+
         stitch_cur = stitch[offset_y:end_y, offset_x:end_x, :4]
         stitch_cur[image[1]>0] = image[1][image[1]>0]
-        ####
-                
-        #stitch[offset_y:end_y, offset_x:end_x, :4] = image[1]
 
     return stitch
 
@@ -210,10 +214,10 @@ def create_panorama(images, center):
     #print('Done right part')
     return panorama
 
-images = [ cv2.cvtColor(VideoFeedReader(0, img, in_color=True).read(), cv2.COLOR_RGB2RGBA) for img in glob.glob(path + '000*.jpg')]
+my_images = glob.glob(path + '*.jpg')
+images = [ cv2.cvtColor(VideoFeedReader(0, my_images[img], in_color=False).read(), cv2.COLOR_RGB2RGBA) for img in range(0, len(my_images), 10)]
 
 center = len(images) // 2
-#print(len(images), center)
 
 panorama = create_panorama(images, center)
 
