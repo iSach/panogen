@@ -75,17 +75,17 @@ class MotionDetector:
 		
 		return {'mask': mask, 'boxes': res}
 
-	def compute_ball_depths(self, frame, ball_boxes):
+	def compute_ball_depths(self, ball_boxes):
 		"""
 		Compute the depth of the balls in the frame.
 		"""
 
 		depths = []
 		for box in ball_boxes:
-			depths.append(self.compute_ball_depth(frame, box))
+			depths.append(self.compute_ball_depth(box))
 		return depths
 
-	def compute_ball_depth(self, frame, ball_box):
+	def compute_ball_depth(self, ball_box):
 		"""
 		Compute the depth of the ball in the frame.
 		"""
@@ -95,7 +95,7 @@ class MotionDetector:
 		x, y = int((x1 + x2) / 2), int((y1 + y2) / 2)
 		px_diameter = int((x2 - x1))  # Diameter in pixels.
 		# Compute the pixels per meter
-		if px_diameter < self.px_threshold:
+		if px_diameter < 0:#self.px_threshold:
 			return self.small_ball_pxdiam / px_diameter
 		else:
 			return self.big_ball_pxdiam / px_diameter

@@ -31,7 +31,7 @@ save_video = args.savevideo
 display_video = args.displayvideo
 frames_per_update = args.skip
 print_angle = args.print
-save_bbox = True
+save_bbox = False
 
 
 # Calibrate camera, no matter the parameters.
@@ -60,7 +60,7 @@ if save_video:
     outputStream = cv2.VideoWriter(file_name, codec, 25.0, (1280, 720), 0)
 
 vfr = VideoFeedReader(online=online, path=path)
-md = MotionDetector(model='yolov5n')
+md = MotionDetector(model='yolov5n', big_ball_diam=17)
 if save_bbox:
     jw = JsonWriter('json/' + path.split('/')[-1])
 
@@ -78,9 +78,9 @@ while True:
     boxes = res['boxes']
 
     if save_bbox:
-        jw.write_frame(frame_id, boxes)
+        jw.write_frame(frame_id, boxes, md)
 
-    if frame_count == frames_per_update:
+    if frame_count == frames_per_update: # TODO fix
         #curr_angle += find_angle(previous_frame, current_frame, cam_matrix)
         curr_angle += 0
         if print_angle:
@@ -94,12 +94,15 @@ while True:
     if display_video:
         for box in boxes:
             txt = 'person' if box[5] == 0 else 'ball'
+            if txt == 'ball':
+                txt += ' ({})'.format(md.compute_ball_depth(box))
             color = (0, 0, 255) if box[5] == 0 else (255, 0, 0)
             cv2.putText(current_frame, txt, (box[0], box[1] + 15), font, 0.8, color, lineType)
             cv2.rectangle(current_frame, (box[0], box[1]), (box[2], box[3]), color, 2)
 
         cv2.putText(current_frame, str(curr_angle), (50,90), 
                     font, fontScale, fontColor, lineType)
+                    
         # Display the resulting frame
         cv2.imshow('Frame', current_frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
