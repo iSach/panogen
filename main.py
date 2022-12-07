@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 from feed_reader import VideoFeedReader
 from json_writer import JsonWriter
 import time
+from tqdm import tqdm
 
 # Parse arguments
 parser = ArgumentParser()
@@ -31,7 +32,7 @@ save_video = args.savevideo
 display_video = args.displayvideo
 frames_per_update = args.skip
 print_angle = args.print
-save_bbox = False
+save_bbox = True
 
 
 # Calibrate camera, no matter the parameters.
@@ -64,6 +65,9 @@ md = MotionDetector(model='yolov5n', big_ball_diam=17)
 if save_bbox:
     jw = JsonWriter('json/' + path.split('/')[-1])
 
+if not display_video:
+    pbar = tqdm(total=-1)
+
 start_time = time.time()
 previous_frame = vfr.read()
 while True:
@@ -92,14 +96,20 @@ while True:
         previous_frame = current_frame.copy()
     
     if display_video:
-        for box in boxes:
-            txt = 'person' if box[5] == 0 else 'ball'
-            if txt == 'ball':
-                is_big, depth = md.compute_ball_depth(box)
-                txt = 'BALL' if is_big else 'ball'
-                txt_z = '{}m'.format(round(depth, 2))
-                cv2.putText(current_frame, txt_z, (box[0], box[1] + 32), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 0, 0), 2)
-            color = (0, 0, 255) if box[5] == 0 else (255, 0, 0)
+        person_boxes = boxes[boxes[:, 5] == 0][:, :4]
+        color = (0, 0, 255)
+        for box in person_boxes:
+            cv2.putText(current_frame, 'person', (box[0], box[1] + 16), font, 0.8, color, lineType)
+            cv2.rectangle(current_frame, (box[0], box[1]), (box[2], box[3]), color, 2)
+
+        ball_boxes = boxes[boxes[:, 5] == 1][:, :4]
+        balls_depths = md.compute_ball_depths(ball_boxes)
+        color = (255, 0, 0)
+        for i, box in enumerate(ball_boxes):
+            is_big, depth = balls_depths[i]
+            txt = 'BALL' if is_big else 'ball'
+            txt_z = '{}m'.format(round(depth, 2))
+            cv2.putText(current_frame, txt_z, (box[0], box[1] + 32), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 0, 0), 2)
             cv2.putText(current_frame, txt, (box[0], box[1] + 16), font, 0.8, color, lineType)
             cv2.rectangle(current_frame, (box[0], box[1]), (box[2], box[3]), color, 2)
 
@@ -110,6 +120,8 @@ while True:
         cv2.imshow('Frame', current_frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+    else:
+        pbar.update(1)
     
     if save_video:
         outputStream.write(current_frame)
