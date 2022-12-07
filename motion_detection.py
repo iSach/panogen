@@ -18,10 +18,6 @@ class MotionDetector:
 		person_mask: The mask to use for the persons. Can be 'ellipse' or 'rectangle'.
 		"""
 
-		# Diameter in pixels at 1m for the balls.
-		self.small_ball_pxrad = int(PPM * small_ball_diam)
-		self.big_ball_pxrad = int(PPM * big_ball_diam)
-
 		self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 		if model.startswith('yolov5'):
 			self.model = torch.hub.load('ultralytics/yolov5', model, pretrained=True).eval().to(self.device)
@@ -31,10 +27,16 @@ class MotionDetector:
 
 		self.__PERSON_CLASS = 0
 		self.__BALL_CLASS = 32
-		
 
 		self.ball_mask = ball_mask
 		self.person_mask = person_mask
+
+		# Diameter in pixels at 1m for the balls.
+		self.small_ball_pxdiam = int(PPM * small_ball_diam)
+		self.big_ball_pxdiam = int(PPM * big_ball_diam)
+
+		closest_small_ball = 2
+		self.px_threshold = self.small_ball_pxdiam / closest_small_ball
 	
 	def detect(self, frame):
 		"""
@@ -73,6 +75,16 @@ class MotionDetector:
 		
 		return {'mask': mask, 'boxes': res}
 
+	def compute_ball_depths(self, frame, ball_boxes):
+		"""
+		Compute the depth of the balls in the frame.
+		"""
+
+		depths = []
+		for box in ball_boxes:
+			depths.append(self.compute_ball_depth(frame, box))
+		return depths
+
 	def compute_ball_depth(self, frame, ball_box):
 		"""
 		Compute the depth of the ball in the frame.
@@ -84,9 +96,9 @@ class MotionDetector:
 		px_diameter = int((x2 - x1))  # Diameter in pixels.
 		# Compute the pixels per meter
 		if px_diameter < self.px_threshold:
-			return self.small_ball_pxrad / px_diameter
+			return self.small_ball_pxdiam / px_diameter
 		else:
-			return self.big_ball_pxrad / px_diameter
+			return self.big_ball_pxdiam / px_diameter
 
 
 md = MotionDetector()
