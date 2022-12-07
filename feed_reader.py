@@ -12,7 +12,13 @@ class VideoFeedReader:
 
 		if self.online:
 			# TODO change
-			self.cap = cv2.VideoCapture(0)
+			gst_str = "nvarguscamerasrc ! video/x-raw(memory:NVMM)," \
+            "width=(int)1280, height=(int)720, format=(string)NV12, " \
+            "framerate=(fraction)25/1 ! nvvidconv ! video/x-raw, " \
+            "width=(int)1280, height=(int)720, format=(string)BGRx ! " \
+            "videoconvert ! video/x-raw, format=(string)BGR !" \
+            "appsink"
+			self.cap = cv2.VideoCapture(gst_str, cv2.CAP_GSTREAMER)
 
 	def read(self):
 		if self.online:
