@@ -36,7 +36,7 @@ class MotionDetector:
 		self.big_ball_pxdiam = int(PPM * big_ball_diam)
 
 		closest_small_ball = 1
-		self.px_threshold = self.small_ball_pxdiam / closest_small_ball-
+		self.px_threshold = self.small_ball_pxdiam / closest_small_ball
 	
 	def detect(self, frame):
 		"""
@@ -80,9 +80,17 @@ class MotionDetector:
 		Compute the depth of the balls in the frame.
 		"""
 
-		depths = []
-		for box in ball_boxes:
-			depths.append(self.compute_ball_depth(box))
+		nb_boxes = len(ball_boxes)
+
+		if nb_boxes == 0:
+			return []
+		elif nb_boxes == 2:
+			box_sizes = ball_boxes[:, 2] - ball_boxes[:, 0]
+			ball_types = box_sizes  == torch.max(box_sizes)
+			depths = [(ball_types[i], self.__get_ball_depth(ball_boxes[i], ball_types[i])) for i in range(nb_boxes)]
+		else:
+			return [self.compute_ball_depth(box) for box in ball_boxes]
+
 		return depths
 
 	def compute_ball_depth(self, ball_box):
@@ -92,12 +100,19 @@ class MotionDetector:
 		return: A tuple (is_big_ball, depth)
 		"""
 
-		# Bounding box: x1, y1, x2, y2, score, class
-		x1, y1, x2, y2 = ball_box[:4]
-		x, y = int((x1 + x2) / 2), int((y1 + y2) / 2)
-		px_diameter = int((x2 - x1))  # Diameter in pixels.
-		# Compute the pixels per meter
+		# Criterion when seeing one ball to differentiate between big and small balls.
+		px_diameter = int((ball_box[2] - ball_box[0]))
 		if px_diameter < self.px_threshold:
-			return False, self.small_ball_pxdiam / px_diameter
+			return False, self.__get_ball_depth(ball_box, False)
 		else:
-			return True, self.big_ball_pxdiam / px_diameter
+			return True, self.__get_ball_depth(ball_box, True)
+
+	def __get_ball_depth(self, bbox, is_big):
+		"""
+		Compute the depth of the ball in the frame.
+		"""
+		px_diameter = int((bbox[2] - bbox[0]))
+		if is_big:
+			return self.big_ball_pxdiam / px_diameter
+		else:
+			return self.small_ball_pxdiam / px_diameter
