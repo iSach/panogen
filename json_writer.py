@@ -6,7 +6,7 @@ class JsonWriter(object):
         self.file = open(path + '.json', 'w')
         self.data = []
 
-    def write_frame(self, frame_id, boxes):
+    def write_frame(self, frame_id, boxes, motion_detector):
         nb_boxes = boxes.shape[0]
         for i in range(nb_boxes):
             box = boxes[i]
@@ -18,7 +18,7 @@ class JsonWriter(object):
             score = box[4].item()
             cat_id = 2 if box[5].item() == 0 else 1
             if cat_id == 1:  # ball
-                depth = 0 # TODO
+                depth = motion_detector.compute_ball_depth(frame_id, box)
                 self.write_ball(frame_id, x1, y1, x2, y2, depth, score)
             elif cat_id == 2:  # person
                 self.write_person(frame_id, x1, y1, x2, y2, score)

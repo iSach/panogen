@@ -63,6 +63,20 @@ OBJECT DETECTION:
     - Outside mAP (person): 96.04%
     - Outside mAP (ball): 10.89%
 
+depth = (diameter in px at 1m) / (diameter in px on image)
+ppm: 9.52px/cm
+
+Basket ball: 
+  - Distance: 1m -> radius = 226px
+  - Distance: 2m -> radius = 113px
+  - Real diameter: 23.8cm (11.9cm)
+
+Foot ball:
+  - Distance: 1m -> diameter = 100px
+  - Distance: 2m -> diameter = 50px
+  - Real diameter: 10.5cm (5.25cm)
+  - Should be: at 1.5m: 67px
+                  0.5m: 200px
 
 Qualitative notes:
  * We should use a low confidence level on detection because we want more FPs over FNs.
@@ -77,3 +91,5 @@ Qualitative notes:
                                * mAP ball increases (x2) everywhere
  * ellipse with person: will let hands go out so might not give a good mask for panorama
  * Like for FP, we prefer masking too much than not enough, gain in accuracy maybe not needed.
+
+
