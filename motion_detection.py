@@ -35,8 +35,8 @@ class MotionDetector:
 		self.small_ball_pxdiam = int(PPM * small_ball_diam)
 		self.big_ball_pxdiam = int(PPM * big_ball_diam)
 
-		closest_small_ball = 2
-		self.px_threshold = self.small_ball_pxdiam / closest_small_ball
+		closest_small_ball = 1
+		self.px_threshold = self.small_ball_pxdiam / closest_small_ball-
 	
 	def detect(self, frame):
 		"""
@@ -88,6 +88,8 @@ class MotionDetector:
 	def compute_ball_depth(self, ball_box):
 		"""
 		Compute the depth of the ball in the frame.
+
+		return: A tuple (is_big_ball, depth)
 		"""
 
 		# Bounding box: x1, y1, x2, y2, score, class
@@ -95,10 +97,7 @@ class MotionDetector:
 		x, y = int((x1 + x2) / 2), int((y1 + y2) / 2)
 		px_diameter = int((x2 - x1))  # Diameter in pixels.
 		# Compute the pixels per meter
-		if px_diameter < 0:#self.px_threshold:
-			return self.small_ball_pxdiam / px_diameter
+		if px_diameter < self.px_threshold:
+			return False, self.small_ball_pxdiam / px_diameter
 		else:
-			return self.big_ball_pxdiam / px_diameter
-
-
-md = MotionDetector()
+			return True, self.big_ball_pxdiam / px_diameter

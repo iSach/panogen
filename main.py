@@ -95,9 +95,12 @@ while True:
         for box in boxes:
             txt = 'person' if box[5] == 0 else 'ball'
             if txt == 'ball':
-                txt += ' ({})'.format(md.compute_ball_depth(box))
+                is_big, depth = md.compute_ball_depth(box)
+                txt = 'BALL' if is_big else 'ball'
+                txt_z = '{}m'.format(round(depth, 2))
+                cv2.putText(current_frame, txt_z, (box[0], box[1] + 32), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 0, 0), 2)
             color = (0, 0, 255) if box[5] == 0 else (255, 0, 0)
-            cv2.putText(current_frame, txt, (box[0], box[1] + 15), font, 0.8, color, lineType)
+            cv2.putText(current_frame, txt, (box[0], box[1] + 16), font, 0.8, color, lineType)
             cv2.rectangle(current_frame, (box[0], box[1]), (box[2], box[3]), color, 2)
 
         cv2.putText(current_frame, str(curr_angle), (50,90), 
