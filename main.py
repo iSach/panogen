@@ -23,6 +23,18 @@ parser.add_argument('-dv', '--displayvideo', type=lambda x: (str(x).lower() == '
 parser.add_argument('-s', '--skip', type=int, default=1, help='frames between two updates of the angle estimation')
 # Print the angle in the console
 parser.add_argument('-d', '--print', type=lambda x: (str(x).lower() == 'true'), default=False, help='print the angle in the console')
+# Frame count format: 0037 or 37
+parser.add_argument('-f', '--padcount', type=lambda x: (str(x).lower() == 'true'), default=True, help='Pad frame count format: 0037 or 37')
+# File format
+parser.add_argument('-ff', '--format', type=str, default='jpg', help='File format')
+# YOLO model
+parser.add_argument('-m', '--model', type=str, default='yolov5n', help='YOLO model')
+# Small ball diameter
+parser.add_argument('-sd', '--smalldiameter', type=float, default=10.5, help='Small ball diameter')
+# Small ball diameter
+parser.add_argument('-bd', '--bigdiameter', type=float, default=23.8, help='Big ball diameter')
+# Save to JSON?
+parser.add_argument('-sj', '--savejson', type=lambda x: (str(x).lower() == 'true'), default=False, help='Save to JSON?')
 
 # Argument values
 args = parser.parse_args()
@@ -32,7 +44,13 @@ save_video = args.savevideo
 display_video = args.displayvideo
 frames_per_update = args.skip
 print_angle = args.print
-save_bbox = False
+save_bbox = args.savejson
+pad_count = args.padcount
+file_format = args.format
+yolo_model = args.model
+small_ball_diam = args.smalldiameter
+big_ball_diam = args.bigdiameter
+save_bbox = args.savejson
 
 
 # Calibrate camera, no matter the parameters.
@@ -60,8 +78,8 @@ if save_video:
     codec = cv2.VideoWriter_fourcc(*'mp4v')
     outputStream = cv2.VideoWriter(file_name, codec, 25.0, (1280, 720), 0)
 
-vfr = VideoFeedReader(online=online, path=path)
-md = MotionDetector(model='yolov5s', big_ball_diam=14.8)
+vfr = VideoFeedReader(online=online, path=path, pad_count=pad_count, file_format=file_format, begin_frame=200)
+md = MotionDetector(model=yolo_model, big_ball_diam=big_ball_diam, small_ball_diam=small_ball_diam)
 if save_bbox:
     jw = JsonWriter('json/' + path.split('/')[-1])
 
@@ -78,7 +96,7 @@ while True:
     if current_frame is None:
         break
     
-    res = md.detect(current_frame, size=320)
+    res = md.detect(current_frame, size=640)
     boxes = res['boxes']
 
     if save_bbox:
