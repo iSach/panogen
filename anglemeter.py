@@ -1,5 +1,8 @@
+import cv2
+import numpy as np
+
 # Then, use the calibration matrix to find the angle of rotation between two images.
-def get_panning_angle(rot_matrix):
+def __get_panning_angle(rot_matrix):
     """
     Get the panning angle from the rotation matrix.
     Args:
@@ -23,7 +26,7 @@ def find_angle(img1, img2, camera_matrix):
     """
 
     # Find the keypoints and descriptors.
-    orb = cv.ORB_create()
+    orb = cv2.ORB_create()
     kp1, des1 = orb.detectAndCompute(img1,None)
     kp2, des2 = orb.detectAndCompute(img2,None)
     des1, des2 = np.float32(des1), np.float32(des2)
@@ -32,7 +35,7 @@ def find_angle(img1, img2, camera_matrix):
     FLANN_INDEX_KDTREE = 1
     index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
     search_params = dict(checks = 50)
-    flann = cv.FlannBasedMatcher(index_params, search_params)
+    flann = cv2.FlannBasedMatcher(index_params, search_params)
     matches = flann.knnMatch(des1, des2, k=2)
 
     # Lowe's ratio test
@@ -43,7 +46,7 @@ def find_angle(img1, img2, camera_matrix):
 
     src_pts = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1,1,2)
     dst_pts = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1,1,2)
-    M, _ = cv.findHomography(src_pts, dst_pts, cv.RANSAC, 5.0)
-    _, rotations, _, _ = cv.decomposeHomographyMat(M, K=camera_matrix)
+    M, _ = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+    _, rotations, _, _ = cv2.decomposeHomographyMat(M, K=camera_matrix)
 
-    return get_panning_angle(rotations[0])
+    return __get_panning_angle(rotations[0])

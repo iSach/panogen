@@ -7,6 +7,7 @@ from json_writer import JsonWriter
 import time
 from tqdm import tqdm
 from calibration import get_camera_matrix
+from anglemeter import find_angle
 
 # Parse arguments
 parser = ArgumentParser()
@@ -21,7 +22,7 @@ parser.add_argument('-sv', '--savevideo', type=lambda x: (str(x).lower() == 'tru
 parser.add_argument('-dv', '--displayvideo', type=lambda x: (str(x).lower() == 'true'), default=True, 
                     help='display a video with the angle overlayed on the frames')
 # Frames between two updates of the angle estimation
-parser.add_argument('-s', '--skip', type=int, default=1, help='frames between two updates of the angle estimation')
+parser.add_argument('-s', '--skip', type=int, default=0, help='frames between two updates of the angle estimation')
 # Print the angle in the console
 parser.add_argument('-d', '--print', type=lambda x: (str(x).lower() == 'true'), default=False, help='print the angle in the console')
 # Frame count format: 0037 or 37
@@ -89,6 +90,8 @@ previous_frame = vfr.read()
 curr_angle = 0
 frame_count = 1
 frame_id = 0
+min_angle = -5
+max_angle = 5
 
 while True:
     # Read frame
@@ -104,8 +107,8 @@ while True:
     if save_bbox:
         jw.write_frame(frame_id, boxes, md)
 
-    if frame_count == frames_per_update: # TODO fix
-        #curr_angle += find_angle(previous_frame, current_frame, cam_matrix)
+    if frame_count == (frames_per_update + 1):
+        curr_angle += find_angle(previous_frame, current_frame, cam_matrix)
         curr_angle += 0
         if print_angle:
             print("Angle: {}".format(curr_angle))
@@ -115,6 +118,16 @@ while True:
         # Update the previous frame
         previous_frame = current_frame.copy()
     
+    if curr_angle > max_angle + 10 or curr_angle < min_angle - 10:
+        print('Updating panorama...')
+        # TODO
+    
+    if curr_angle > max_angle + 10:
+        max_angle = curr_angle
+
+    if curr_angle < min_angle - 10:
+        min_angle = curr_angle
+
     if display_video:
         person_boxes = boxes[boxes[:, 5] == 0][:, :4]
         color = (0, 0, 255)
