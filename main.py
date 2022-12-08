@@ -6,6 +6,7 @@ from feed_reader import VideoFeedReader
 from json_writer import JsonWriter
 import time
 from tqdm import tqdm
+from calibration import get_camera_matrix
 
 # Parse arguments
 parser = ArgumentParser()
@@ -52,9 +53,8 @@ small_ball_diam = args.smalldiameter
 big_ball_diam = args.bigdiameter
 save_bbox = args.savejson
 
-
 # Calibrate camera, no matter the parameters.
-#cam_matrix = calibrate_camera('calibration', debug=True)
+cam_matrix = get_camera_matrix()
 
 # set parameters for text drawn on the frames
 font = cv2.FONT_HERSHEY_COMPLEX
@@ -68,9 +68,14 @@ translation = 'None'
 motion = 'None'
 motion_type = 'None'
 
-curr_angle = 0
-frame_count = 1
-frame_id = 0
+vfr = VideoFeedReader(online=online, path=path, pad_count=pad_count, file_format=file_format)
+md = MotionDetector(model=yolo_model, big_ball_diam=big_ball_diam, small_ball_diam=small_ball_diam)
+
+if save_bbox:
+    jw = JsonWriter('json/' + path.split('/')[-1])
+
+if not display_video:
+    pbar = tqdm(total=-1)
 
 if save_video:
     # initialise video writer
@@ -78,16 +83,13 @@ if save_video:
     codec = cv2.VideoWriter_fourcc(*'mp4v')
     outputStream = cv2.VideoWriter(file_name, codec, 25.0, (1280, 720), 1)
 
-vfr = VideoFeedReader(online=online, path=path, pad_count=pad_count, file_format=file_format)
-md = MotionDetector(model=yolo_model, big_ball_diam=big_ball_diam, small_ball_diam=small_ball_diam)
-if save_bbox:
-    jw = JsonWriter('json/' + path.split('/')[-1])
-
-if not display_video:
-    pbar = tqdm(total=-1)
-
 start_time = time.time()
+
 previous_frame = vfr.read()
+curr_angle = 0
+frame_count = 1
+frame_id = 0
+
 while True:
     # Read frame
     current_frame = vfr.read()
