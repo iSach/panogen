@@ -119,8 +119,9 @@ while True:
         previous_frame = current_frame.copy()
     
     if curr_angle > max_angle + 10 or curr_angle < min_angle - 10:
-        print('Updating panorama...')
+        #print('Updating panorama...')
         # TODO
+        pass
     
     if curr_angle > max_angle + 10:
         max_angle = curr_angle
