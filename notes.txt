@@ -19,49 +19,49 @@ Total accuracy: 94.03%
 OBJECT DETECTION (on board, our dataset):
 
 * yolov5n
-    - Speed: 70ms
-    - Inside mAP: 47.52%
-    - Inside mAP (person): 61.95%
-    - Inside mAP (ball): 33.09%
-    - Outside mAP: 50.18%
-    - Outside mAP (person): 91.45%
-    - Outside mAP (ball): 8.91%
+    Speed: 70ms @ 640, 80ms @ 320
+    Inside mAP: 65.51%
+    Inside mAP (person): 78.09%
+    Inside mAP (ball): 52.94%
+    Outside mAP: 54.42%
+    Outside mAP (person): 92.02%
+    Outside mAP (ball): 16.83%
 
 * yolov5s
-    - Speed: 90ms
-    - Inside mAP: 63.62%
-    - Inside mAP (person): 80.0%
-    - Inside mAP (ball): 47.23%
-    - Outside mAP: 53.46%
-    - Outside mAP (person): 95.05%
-    - Outside mAP (ball): 11.88%
+    Speed: 100ms @ 640
+    Inside mAP: 72.18%
+    Inside mAP (person): 86.19%
+    Inside mAP (ball): 58.18%
+    Outside mAP: 52.24%
+    Outside mAP (person): 92.6%
+    Outside mAP (ball): 11.88%
 
 * yolov5m
-    - Speed: 190ms
-    - Inside mAP: 59.36%
-    - Inside mAP (person): 81.0%
-    - Inside mAP (ball): 37.71%
-    - Outside mAP: 59.89%
-    - Outside mAP (person): 92.67%
-    - Outside mAP (ball): 27.1%
+    Speed: 190ms
+    Inside mAP: 71.98%
+    Inside mAP (person): 89.04%
+    Inside mAP (ball): 54.92%
+    Outside mAP: 59.96%
+    Outside mAP (person): 95.35%
+    Outside mAP (ball): 24.57%
 
 * yolov5l
-    - Speed: 343ms
-    - Inside mAP: 64.77%
-    - Inside mAP (person): 89.34%
-    - Inside mAP (ball): 40.2%
-    - Outside mAP: 58.67%
-    - Outside mAP (person): 95.49%
-    - Outside mAP (ball): 21.84%
+    Speed: 325ms
+    Inside mAP: 79.5%
+    Inside mAP (person): 92.35%
+    Inside mAP (ball): 66.65%
+    Outside mAP: 64.81%
+    Outside mAP (person): 95.41%
+    Outside mAP (ball): 34.21%
 
 * yolov5x
-    - Speed: 600ms
-    - Inside mAP: 72.74%
-    - Inside mAP (person): 87.36%
-    - Inside mAP (ball): 58.13%
-    - Outside mAP: 58.15%
-    - Outside mAP (person): 95.51%
-    - Outside mAP (ball): 20.79%
+    Speed: 550ms
+    Inside mAP: 81.99%
+    Inside mAP (person): 89.5%
+    Inside mAP (ball): 74.47%
+    Outside mAP: 61.26%
+    Outside mAP (person): 95.25%
+    Outside mAP (ball): 27.28%
     
 
 depth = (diameter in px at 1m) / (diameter in px on image)

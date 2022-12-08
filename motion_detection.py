@@ -20,9 +20,9 @@ class MotionDetector:
 
 		self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 		if model.startswith('yolov5'):
-			self.model = torch.hub.load('ultralytics/yolov5', model, pretrained=True).eval().to(self.device)
+			self.model = torch.hub.load('ultralytics/yolov5', model, pretrained=True, _verbose=False).eval().to(self.device)
 		elif model.startswith('yolov3'):
-			self.model = torch.hub.load('ultralytics/yolov3', model, pretrained=True).eval().to(self.device)
+			self.model = torch.hub.load('ultralytics/yolov3', model, pretrained=True, _verbose=False).eval().to(self.device)
 		self.model_type = 'yolo'
 
 		self.__PERSON_CLASS = 0
@@ -38,13 +38,15 @@ class MotionDetector:
 		closest_small_ball = 1
 		self.px_threshold = self.small_ball_pxdiam / closest_small_ball
 	
-	def detect(self, frame):
+	def detect(self, frame, size=640):
 		"""
 		in: frame (OpenCV)
 
 		out: A dictionary with the mask, and the bounding boxes of the detected objects
 		"""
-		res = self.model(frame).xyxy[0]
+		frame = frame[..., ::-1]
+
+		res = self.model(frame, size=size).xyxy[0]
 		res = res[(res[:, 5] == self.__BALL_CLASS) | (res[:, 5] == self.__PERSON_CLASS)]
 
 		balls_center = []

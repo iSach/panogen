@@ -32,7 +32,7 @@ save_video = args.savevideo
 display_video = args.displayvideo
 frames_per_update = args.skip
 print_angle = args.print
-save_bbox = True
+save_bbox = False
 
 
 # Calibrate camera, no matter the parameters.
@@ -61,7 +61,7 @@ if save_video:
     outputStream = cv2.VideoWriter(file_name, codec, 25.0, (1280, 720), 0)
 
 vfr = VideoFeedReader(online=online, path=path)
-md = MotionDetector(model='yolov5n', big_ball_diam=17)
+md = MotionDetector(model='yolov5s', big_ball_diam=14.8)
 if save_bbox:
     jw = JsonWriter('json/' + path.split('/')[-1])
 
@@ -78,7 +78,7 @@ while True:
     if current_frame is None:
         break
     
-    res = md.detect(current_frame)
+    res = md.detect(current_frame, size=320)
     boxes = res['boxes']
 
     if save_bbox:
