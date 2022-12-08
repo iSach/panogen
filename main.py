@@ -76,9 +76,9 @@ if save_video:
     # initialise video writer
     file_name = "results/" + path.split('/')[-1] + '.mp4'
     codec = cv2.VideoWriter_fourcc(*'mp4v')
-    outputStream = cv2.VideoWriter(file_name, codec, 25.0, (1280, 720), 0)
+    outputStream = cv2.VideoWriter(file_name, codec, 25.0, (1280, 720), 1)
 
-vfr = VideoFeedReader(online=online, path=path, pad_count=pad_count, file_format=file_format, begin_frame=200)
+vfr = VideoFeedReader(online=online, path=path, pad_count=pad_count, file_format=file_format)
 md = MotionDetector(model=yolo_model, big_ball_diam=big_ball_diam, small_ball_diam=small_ball_diam)
 if save_bbox:
     jw = JsonWriter('json/' + path.split('/')[-1])

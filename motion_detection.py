@@ -35,7 +35,7 @@ class MotionDetector:
 		self.small_ball_pxdiam = int(PPM * small_ball_diam)
 		self.big_ball_pxdiam = int(PPM * big_ball_diam)
 
-		closest_small_ball = 1
+		closest_small_ball = 1.5
 		self.px_threshold = self.small_ball_pxdiam / closest_small_ball
 	
 	def detect(self, frame, size=640):
@@ -89,6 +89,10 @@ class MotionDetector:
 		elif nb_boxes == 2:
 			box_sizes = ball_boxes[:, 2] - ball_boxes[:, 0]
 			ball_types = box_sizes  == torch.max(box_sizes)
+
+			# If the two balls sizes are too close, we cannot differentiate between them.
+			if torch.abs(box_sizes[0] - box_sizes[1]) < 10:
+				return [self.compute_ball_depth(box) for box in ball_boxes]
 			depths = [(ball_types[i], self.__get_ball_depth(ball_boxes[i], ball_types[i])) for i in range(nb_boxes)]
 		else:
 			return [self.compute_ball_depth(box) for box in ball_boxes]
