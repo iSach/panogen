@@ -108,16 +108,12 @@ while True:
     boxes = res['boxes']
 
     mask = res['mask']
-    current_panorama, angle = StitchImages(BaseImage, current_frame, cam_matrix, mask)
-    BaseImage = current_panorama.copy()
-    # TODO visualisation
-    # cv2.imwrite("Stitched_Panorama.jpg", current_panorama)
 
     if save_bbox:
         jw.write_frame(frame_id, boxes, md)
 
     if frame_count == (frames_per_update + 1):
-        curr_angle += angle #find_angle(previous_frame, current_frame, cam_matrix)
+        curr_angle += find_angle(previous_frame, current_frame, cam_matrix)
         curr_angle += 0
         if print_angle:
             print("Angle: {}".format(curr_angle))
@@ -129,7 +125,10 @@ while True:
     
     if curr_angle > max_angle + 10 or curr_angle < min_angle - 10:
         #print('Updating panorama...')
-        # TODO
+        current_panorama, _ = StitchImages(BaseImage, current_frame, cam_matrix, mask)
+        BaseImage = current_panorama.copy()
+        # TODO visualisation
+        # cv2.imwrite("Stitched_Panorama.jpg", current_panorama)
         pass
     
     if curr_angle > max_angle + 10:
