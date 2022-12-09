@@ -1,20 +1,37 @@
 gpu: 3080
 
-yolov5s:
+yolov5n:
 * With rectangles
-Inside accuracy: 86.18%
-Outside accuracy: 98.65%
-Total accuracy: 92.42%
+Inside accuracy: 86.89%
+Outside accuracy: 98.63%
+Total accuracy: 92.76%
 
 * person rectangles, balls circles:
-Inside accuracy: 86.35%
-Outside accuracy: 98.66%
-Total accuracy: 92.51%
+Inside accuracy: 86.93%
+Outside accuracy: 98.63%
+Total accuracy: 92.78%
 
 * person ellipse, balls circle:
-Inside accuracy: 89.06%
+Inside accuracy: 89.48%
 Outside accuracy: 99.0%
-Total accuracy: 94.03%
+Total accuracy: 94.24%
+
+yolov5x:
+* With rectangles
+Inside accuracy: 85.4%
+Outside accuracy: 98.6%
+Total accuracy: 92.0%
+
+* person rectangles, balls circles:
+Inside accuracy: 85.46%
+Outside accuracy: 98.61%
+Total accuracy: 92.03%
+
+* person ellipse, balls circle:
+Inside accuracy: 88.85%
+Outside accuracy: 98.98%
+Total accuracy: 93.91%
+
 
 OBJECT DETECTION (on board, our dataset):
 
