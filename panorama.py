@@ -119,7 +119,7 @@ def StitchImages(BaseImage, SecImage, camera_matrix, mask):
         float: panning angle in degrees.
     """
     # Applying Cylindrical projection on SecImage
-    SecImage_Cyl, mask_x, mask_y = ProjectOntoCylinder(SecImage)
+    SecImage_Cyl, mask_x, mask_y = ProjectOntoCylinder(SecImage, cam_matrix)
 
     # Getting SecImage Mask
     SecImage_Mask = np.zeros(SecImage_Cyl.shape, dtype=np.uint8)
