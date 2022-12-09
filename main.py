@@ -147,8 +147,7 @@ while True:
             cv2.putText(current_frame, txt, (box[0], box[1] + 16), font, 0.8, color, lineType)
             cv2.rectangle(current_frame, (box[0], box[1]), (box[2], box[3]), color, 2)
 
-        cv2.putText(current_frame, str(curr_angle), (50,90), 
-                    font, fontScale, fontColor, lineType)
+        cv2.putText(current_frame, str(round(curr_angle, 3)), (50,90), font, 1.7, fontColor, lineType)
                     
         # Display the resulting frame
         cv2.imshow('Frame', current_frame)
