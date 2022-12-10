@@ -108,6 +108,9 @@ while True:
     boxes = res['boxes']
 
     mask = res['mask']
+    # Inverting the mask by
+    # performing bitwise-not operation
+    mask = cv2.bitwise_not(mask)
 
     if save_bbox:
         jw.write_frame(frame_id, boxes, md)

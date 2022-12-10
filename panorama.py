@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from anglemeter import __get_panning_angle
 
-MIN_MATCH_COUNT = 10
+MIN_MATCH_COUNT = 4
 
 # https://docs.opencv.org/3.4/d1/de0/tutorial_py_feature_homography.html
 def FindMatches(BaseImage, SecImage):
