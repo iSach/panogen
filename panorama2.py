@@ -173,7 +173,7 @@ def create_mosaic(images, origins,pos):
     # new frame of panorama
     stitch = np.zeros((total_height, total_width, 4), np.uint8)
 
-    index = 1
+    index = 0
     position = []
     # stitch images into frame by order of distance
     for image in dist_sorted:
