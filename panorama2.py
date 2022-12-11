@@ -13,29 +13,7 @@ sampling_span = 5
 condition_treshold = 0.5
 
 
-# Parse arguments
-parser = argparse.ArgumentParser()
-# Mode: offline (parse images in a folder) or online (read camera stream)
-parser.add_argument('-o', '--online', type=lambda x: (str(x).lower() == 'true'), default=True, help='offline or online')
-# Path to the folder containing the images (offline mode only)
-parser.add_argument('-p', '--path', type=str, default='images/imgs_', help='Path prefix of the sequence images')
-# duration of the online video
-parser.add_argument('-d', '--duration', type=int, default='20', help='Number of second of making online panorama')
-# number of image to process
-parser.add_argument('-nb', '--number', type=int, default='300', help='Number of images to process')
-
-
-
-# Argument values
-args = parser.parse_args()
-online = args.online
-path = args.path
-duration = args.duration
-nb = args.number
-
-
-
-def compute_homography(image1, image2, bff_match=False):
+def compute_homography(image1, image2):
     """
     Detect and match features between image1 and image2
     Using ORB as the detector
@@ -44,26 +22,30 @@ def compute_homography(image1, image2, bff_match=False):
     """
     # Initiate ORB
     orb = cv2.ORB_create()
-
-    # Find keypoints and descriptor
     kp1, des1 = orb.detectAndCompute(image1, None)
     kp2, des2 = orb.detectAndCompute(image2, None)
+    des1, des2 = np.float32(des1), np.float32(des2)
+    
+    # Match features with FLANN.
+    FLANN_INDEX_KDTREE = 1
+    index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+    search_params = dict(checks = 50)
+    flann = cv2.FlannBasedMatcher(index_params, search_params)
+    matches = flann.knnMatch(des1, des2, k=2)
 
-    ## match descriptors and sort them in the order of their distance
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-    matches = bf.match(des1, des2)
-    matches = sorted(matches, key = lambda x:x.distance)
+    # Lowe's ratio test
+    good = []
+    for m, n in matches:
+        if m.distance < 0.7 * n.distance:
+            good.append(m)
 
-    # Take the top N matches
-    N = 50
-    matches = matches[:N]
+    src_pts = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1,1,2)
+    dst_pts = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1,1,2)
 
-    ## extract the matched keypoints
-    src_pts  = np.float32([kp1[m.queryIdx].pt for m in matches]).reshape(-1,1,2)
-    dst_pts  = np.float32([kp2[m.trainIdx].pt for m in matches]).reshape(-1,1,2)
+    if len(src_pts) < 4 or len(dst_pts) < 4:
+        return 0
 
-    ## find homography matrix and do perspective transform
-    M, _ = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
+    M, _ = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
 
     return M
 
@@ -206,18 +188,21 @@ def create_panorama(image,previous,direction,pos):
         return image
     
     panorama = None
+
     if direction == 1:
-        
-        image_warped, image_origin = warp_image(previous, compute_homography(previous, image))
+        M = compute_homography(previous, image)
+        if M is None:
+            return previous
+        image_warped, image_origin = warp_image(previous, M)
         
         panorama,position = create_mosaic([image_warped, image], [image_origin, (0,0)],pos)
         if pos == 1:
             cv2.rectangle(panorama,position[0],position[1],(0,0,255),5)
-        
-        
-    
     else : 
-        image_warped, image_origin = warp_image(image, compute_homography(image, previous))
+        M = compute_homography(image, previous)
+        if M is None:
+            return previous
+        image_warped, image_origin = warp_image(image, M)
         
         panorama,position = create_mosaic([image_warped, previous], [image_origin, (0,0)],pos)
         if pos == 1:
@@ -231,8 +216,8 @@ def pano(img_fg,previous,direction,pos):
 
     
 
-    image = cv2.cvtColor(img_fg,cv2.COLOR_RGB2RGBA)
+   # image = cv2.cvtColor(img_fg,cv2.COLOR_RGB2RGBA)
 
  
 
-    return create_panorama(image,previous,direction,pos)
+    return create_panorama(img_fg,previous,direction,pos)

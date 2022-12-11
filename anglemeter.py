@@ -46,6 +46,10 @@ def find_angle(img1, img2, camera_matrix):
 
     src_pts = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1,1,2)
     dst_pts = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1,1,2)
+
+    if len(src_pts) < 4 or len(dst_pts) < 4:
+        return 0
+
     M, _ = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
     _, rotations, _, _ = cv2.decomposeHomographyMat(M, K=camera_matrix)
 

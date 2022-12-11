@@ -148,10 +148,10 @@ while True:
         mask_inv = cv2.bitwise_not(mask)   
         img_fg = cv2.bitwise_and(current_frame,current_frame,mask =mask_inv)
         img_pos = img_fg.copy()
-        panoPos =pano(img_pos,previous, direction,1)
+        panoPos = pano(img_pos,previous, direction,1)
         panorama = pano(img_fg,previous, direction,0)
         h,w,_ = panorama.shape
-        if (h - previoush < 20 or w -previousw < 50):
+        if (h - previoush < 20 or w - previousw < 50):
             previous = panorama
         else:
             print("warp failed")
