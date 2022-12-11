@@ -8,6 +8,8 @@ import time
 from tqdm import tqdm
 from calibration import get_camera_matrix
 from anglemeter import find_angle
+from panorama2 import pano
+from panorama2 import crop_pano
 
 # Parse arguments
 parser = ArgumentParser()
@@ -37,6 +39,10 @@ parser.add_argument('-sd', '--smalldiameter', type=float, default=10.5, help='Sm
 parser.add_argument('-bd', '--bigdiameter', type=float, default=23.8, help='Big ball diameter')
 # Save to JSON?
 parser.add_argument('-sj', '--savejson', type=lambda x: (str(x).lower() == 'true'), default=False, help='Save to JSON?')
+# Panorama
+parser.add_argument('-pan', '--panorama', type=lambda x: (str(x).lower() == 'true'), default=False, help='Panorama?')
+# Show bounding boxes and angle on video
+parser.add_argument('-sb', '--showbbox', type=lambda x: (str(x).lower() == 'true'), default=True, help='Show bounding boxes and angle on video')
 
 # Argument values
 args = parser.parse_args()
@@ -53,6 +59,8 @@ yolo_model = args.model
 small_ball_diam = args.smalldiameter
 big_ball_diam = args.bigdiameter
 save_bbox = args.savejson
+show_panorama = args.panorama
+show_bbox = args.showbbox
 
 # Calibrate camera, no matter the parameters.
 cam_matrix = get_camera_matrix()
@@ -88,10 +96,14 @@ start_time = time.time()
 
 previous_frame = vfr.read()
 curr_angle = 0
-frame_count = 1
-frame_id = 0
+frame_count = 0
 min_angle = -5
 max_angle = 5
+
+previous_pano = None
+previoush = 720
+
+ANGLE_DIFF_THRESHOLD = 2
 
 while True:
     # Read frame
@@ -105,49 +117,77 @@ while True:
     boxes = res['boxes']
 
     if save_bbox:
-        jw.write_frame(frame_id, boxes, md)
+        jw.write_frame(frame_count, boxes, md)
 
-    if frame_count == (frames_per_update + 1):
+    if frame_count % (frames_per_update + 1) == 0:
         curr_angle += find_angle(previous_frame, current_frame, cam_matrix)
         curr_angle += 0
         if print_angle:
             print("Angle: {}".format(curr_angle))
-
-        frame_count = 0
     
         # Update the previous frame
         previous_frame = current_frame.copy()
-    
-    if curr_angle > max_angle + 10 or curr_angle < min_angle - 10:
-        #print('Updating panorama...')
-        # TODO
-        pass
-    
-    if curr_angle > max_angle + 10:
-        max_angle = curr_angle
 
-    if curr_angle < min_angle - 10:
-        min_angle = curr_angle
+    # Position of current_frame in panorama
+    if frame_count % 25 == 0 and show_panorama:
+        if previous_pano is not None:
+            pp_copy = previous_pano.copy()
+            # pp_copy = crop_pano(pp_copy)
+            pp_copy = cv2.cvtColor(pp_copy, cv2.COLOR_BGRA2BGR)
+            mt = cv2.matchTemplate(pp_copy, current_frame, cv2.TM_CCOEFF_NORMED)
+            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(mt)
+            top_left = max_loc
+            h, w, _ = current_frame.shape
+            bottom_right = (top_left[0] + w, top_left[1] + h)
+            cv2.rectangle(pp_copy, top_left, bottom_right, (0, 0, 255), 2)
+            cv2.imshow('Panorama', pp_copy)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+    
+    if show_panorama:
+        if curr_angle > max_angle + ANGLE_DIFF_THRESHOLD or curr_angle < min_angle - ANGLE_DIFF_THRESHOLD:
+            if previous_pano is not None:
+                previoush,previousw,_ = previous_pano.shape
+
+            direction = 1 if curr_angle < min_angle - ANGLE_DIFF_THRESHOLD else 0
+            mask = res['mask'] *255
+            mask_inv = cv2.bitwise_not(mask)   
+            img_fg = cv2.bitwise_and(current_frame,current_frame,mask =mask_inv)
+            panorama = pano(img_fg,previous_pano, direction,0)
+            if panorama is not None:
+                h,w,_ = panorama.shape
+                if (h - previoush < 20 or w - previousw < 50):
+                    previous_pano = panorama
+                else:
+                    print("warp failed")
+
+        
+        if curr_angle > max_angle + ANGLE_DIFF_THRESHOLD:
+            max_angle = curr_angle
+
+        if curr_angle < min_angle - ANGLE_DIFF_THRESHOLD:
+            min_angle = curr_angle
 
     if display_video:
-        person_boxes = boxes[boxes[:, 5] == 0][:, :4]
-        color = (0, 0, 255)
-        for box in person_boxes:
-            cv2.putText(current_frame, 'person', (box[0], box[1] + 16), font, 0.8, color, lineType)
-            cv2.rectangle(current_frame, (box[0], box[1]), (box[2], box[3]), color, 2)
+        if show_bbox:
+            person_boxes = boxes[boxes[:, 5] == 0][:, :4]
+            color = (0, 0, 255)
+            for box in person_boxes:
+                cv2.putText(current_frame, 'person', (box[0], box[1] + 16), font, 0.8, color, lineType)
+                cv2.rectangle(current_frame, (box[0], box[1]), (box[2], box[3]), color, 2)
 
-        ball_boxes = boxes[boxes[:, 5] == 1][:, :4]
-        balls_depths = md.compute_ball_depths(ball_boxes)
-        color = (255, 0, 0)
-        for i, box in enumerate(ball_boxes):
-            is_big, depth = balls_depths[i]
-            txt = 'BALL' if is_big else 'ball'
-            txt_z = '{}m'.format(round(depth, 2))
-            cv2.putText(current_frame, txt_z, (box[0], box[1] + 32), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 0, 0), 2)
-            cv2.putText(current_frame, txt, (box[0], box[1] + 16), font, 0.8, color, lineType)
-            cv2.rectangle(current_frame, (box[0], box[1]), (box[2], box[3]), color, 2)
+            ball_boxes = boxes[boxes[:, 5] == 1][:, :4]
+            balls_depths = md.compute_ball_depths(ball_boxes)
+            color = (255, 0, 0)
+            for i, box in enumerate(ball_boxes):
+                is_big, depth = balls_depths[i]
+                txt = 'BALL' if is_big else 'ball'
+                txt_z = '{}m'.format(round(depth, 2))
+                cv2.putText(current_frame, txt_z, (box[0], box[1] + 32), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 0, 0), 2)
+                cv2.putText(current_frame, txt, (box[0], box[1] + 16), font, 0.8, color, lineType)
+                cv2.rectangle(current_frame, (box[0], box[1]), (box[2], box[3]), color, 2)
 
-        cv2.putText(current_frame, str(round(curr_angle, 3)), (50,90), font, 1.7, fontColor, lineType)
+            cv2.putText(current_frame, str(round(curr_angle, 3)), (50,90), font, 1.7, fontColor, lineType)
                     
         # Display the resulting frame
         cv2.imshow('Frame', current_frame)
@@ -160,7 +200,6 @@ while True:
         outputStream.write(current_frame)
 
     frame_count += 1
-    frame_id += 1
 
 if save_video:
     print('Video saved to {}'.format(file_name))
@@ -170,7 +209,7 @@ if save_bbox:
     jw.close()
 
 time_elapsed = time.time() - start_time
-print("Finished in {} seconds (avg. FPS: {})".format(time_elapsed, frame_id / time_elapsed))
+print("Finished in {} seconds (avg. FPS: {})".format(time_elapsed, frame_count / time_elapsed))
 
 # After the loop release the cap object
 vfr.release()

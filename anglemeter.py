@@ -26,31 +26,34 @@ def find_angle(img1, img2, camera_matrix):
     """
 
     # Find the keypoints and descriptors.
-    orb = cv2.ORB_create()
-    kp1, des1 = orb.detectAndCompute(img1,None)
-    kp2, des2 = orb.detectAndCompute(img2,None)
-    des1, des2 = np.float32(des1), np.float32(des2)
-    
-    # Match features with FLANN.
-    FLANN_INDEX_KDTREE = 1
-    index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
-    search_params = dict(checks = 50)
-    flann = cv2.FlannBasedMatcher(index_params, search_params)
-    matches = flann.knnMatch(des1, des2, k=2)
+    try:
+        orb = cv2.ORB_create()
+        kp1, des1 = orb.detectAndCompute(img1,None)
+        kp2, des2 = orb.detectAndCompute(img2,None)
+        des1, des2 = np.float32(des1), np.float32(des2)
+        
+        # Match features with FLANN.
+        FLANN_INDEX_KDTREE = 1
+        index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+        search_params = dict(checks = 50)
+        flann = cv2.FlannBasedMatcher(index_params, search_params)
+        matches = flann.knnMatch(np.asarray(des1,np.float32),np.asarray(des2,np.float32),k=2)
 
-    # Lowe's ratio test
-    good = []
-    for m, n in matches:
-        if m.distance < 0.7 * n.distance:
-            good.append(m)
+        # Lowe's ratio test
+        good = []
+        for m, n in matches:
+            if m.distance < 0.7 * n.distance:
+                good.append(m)
 
-    src_pts = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1,1,2)
-    dst_pts = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1,1,2)
+        src_pts = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1,1,2)
+        dst_pts = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1,1,2)
 
-    if len(src_pts) < 4 or len(dst_pts) < 4:
+        if len(src_pts) < 4 or len(dst_pts) < 4:
+            return 0
+
+        M, _ = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+        _, rotations, _, _ = cv2.decomposeHomographyMat(M, K=camera_matrix)
+
+        return __get_panning_angle(rotations[0])
+    except:
         return 0
-
-    M, _ = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
-    _, rotations, _, _ = cv2.decomposeHomographyMat(M, K=camera_matrix)
-
-    return __get_panning_angle(rotations[0])

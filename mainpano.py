@@ -94,6 +94,7 @@ frame_id = 1
 min_angle = -5
 max_angle = 5
 previous = None
+previous_pos = None
 direction = 1
 previoush = 720
 
@@ -153,11 +154,11 @@ while True:
         h,w,_ = panorama.shape
         if (h - previoush < 20 or w - previousw < 50):
             previous = panorama
+            previous_pos = cv2.resize(panoPos, (1280,720))
         else:
             print("warp failed")
-        resized = cv2.resize(panoPos, (1280,720))
         
-        cv2.imshow('test.jpg', resized)
+        cv2.imshow('test.jpg', previous_pos)
         cv2.waitKey(100)
     
         

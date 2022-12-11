@@ -8,6 +8,7 @@ import os
 import argparse
 import math
 import glob
+import imutils
 
 sampling_span = 5
 condition_treshold = 0.5
@@ -31,7 +32,7 @@ def compute_homography(image1, image2):
     index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
     search_params = dict(checks = 50)
     flann = cv2.FlannBasedMatcher(index_params, search_params)
-    matches = flann.knnMatch(des1, des2, k=2)
+    matches = flann.knnMatch(np.asarray(des1,np.float32),np.asarray(des2,np.float32),k=2)
 
     # Lowe's ratio test
     good = []
@@ -79,6 +80,33 @@ def warp_image(image, H):
 
     return warped, (int(xmin), int(ymin))
 
+# https://pyimagesearch.com/2018/12/17/image-stitching-with-opencv-and-python/
+def crop_pano(output):
+    stitched = cv2.copyMakeBorder(output, 10, 10, 10, 10,
+        cv2.BORDER_CONSTANT, (0, 0, 0))
+    gray = cv2.cvtColor(stitched, cv2.COLOR_BGR2GRAY)
+    thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY)[1]
+    cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
+    c = max(cnts, key=cv2.contourArea)
+    mask = np.zeros(thresh.shape, dtype="uint8")
+    (x, y, w, h) = cv2.boundingRect(c)
+    cv2.rectangle(mask, (x, y), (x + w, y + h), 255, -1)
+    minRect = mask.copy()
+    sub = mask.copy()
+    while cv2.countNonZero(sub) > 0:
+        minRect = cv2.erode(minRect, None)
+        sub = cv2.subtract(minRect, thresh)
+    cnts = cv2.findContours(minRect.copy(), cv2.RETR_EXTERNAL,
+        cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
+    c = max(cnts, key=cv2.contourArea)
+    (x, y, w, h) = cv2.boundingRect(c)
+    stitched = stitched[y:y + h, x:x + w]
+    stitched = cv2.resize(stitched, (1280, 720))
+
+    return stitched
+
 
 # https://gist.github.com/royshil/0b21e8e7c6c1f46a16db66c384742b2b
 def cylindrical_warp_image(img, H):
@@ -103,7 +131,7 @@ def cylindrical_warp_image(img, H):
     
     img_rgba = cv2.cvtColor(img,cv2.COLOR_BGR2BGRA) # for transparent borders...
     # warp the image according to cylindrical coords
-    return cv2.remap(img_rgba, B[:,:,0].astype(np.float32), B[:,:,1].astype(np.float32), cv2.INTER_AREA, borderMode=cv2.BORDER_TRANSPARENT)
+    return cv2.remap(img_rgba, B[:,:,0].astype(np.float32), B[:,:,1].astype(np.float32), cv2.INTER_AREA, borderMode=cv2.BORDER_CONSTANT, borderValue=(0,0,0,0))
 
 def create_mosaic(images, origins,pos):
     # find central image
@@ -213,11 +241,8 @@ def create_panorama(image,previous,direction,pos):
 
 
 def pano(img_fg,previous,direction,pos):
-
-    
-
-   # image = cv2.cvtColor(img_fg,cv2.COLOR_RGB2RGBA)
-
- 
-
-    return create_panorama(img_fg,previous,direction,pos)
+    try:
+        return create_panorama(img_fg,previous,direction,pos)
+    except:
+        print('Panorama failed.')
+        return None
