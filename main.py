@@ -8,7 +8,7 @@ import time
 from tqdm import tqdm
 from calibration import get_camera_matrix
 from anglemeter import find_angle
-from panorama2 import pano
+from panorama2 import create_panorama
 from panorama2 import crop_pano
 
 # Parse arguments
@@ -43,6 +43,8 @@ parser.add_argument('-sj', '--savejson', type=lambda x: (str(x).lower() == 'true
 parser.add_argument('-pan', '--panorama', type=lambda x: (str(x).lower() == 'true'), default=False, help='Panorama?')
 # Show bounding boxes and angle on video
 parser.add_argument('-sb', '--showbbox', type=lambda x: (str(x).lower() == 'true'), default=True, help='Show bounding boxes and angle on video')
+# Begin at frame:
+parser.add_argument('-b', '--begin', type=int, default=0, help='Begin at frame')
 
 # Argument values
 args = parser.parse_args()
@@ -61,6 +63,7 @@ big_ball_diam = args.bigdiameter
 save_bbox = args.savejson
 show_panorama = args.panorama
 show_bbox = args.showbbox
+begin_frame = args.begin
 
 # Calibrate camera, no matter the parameters.
 cam_matrix = get_camera_matrix()
@@ -77,7 +80,7 @@ translation = 'None'
 motion = 'None'
 motion_type = 'None'
 
-vfr = VideoFeedReader(online=online, path=path, pad_count=pad_count, file_format=file_format)
+vfr = VideoFeedReader(online=online, path=path, pad_count=pad_count, file_format=file_format, begin_frame=begin_frame)
 md = MotionDetector(model=yolo_model, big_ball_diam=big_ball_diam, small_ball_diam=small_ball_diam)
 
 if save_bbox:
@@ -97,13 +100,13 @@ start_time = time.time()
 previous_frame = vfr.read()
 curr_angle = 0
 frame_count = 0
-min_angle = -5
-max_angle = 5
 
 previous_pano = None
 previoush = 720
 
 ANGLE_DIFF_THRESHOLD = 2
+min_angle = -ANGLE_DIFF_THRESHOLD
+max_angle = ANGLE_DIFF_THRESHOLD
 
 while True:
     # Read frame
@@ -121,7 +124,6 @@ while True:
 
     if frame_count % (frames_per_update + 1) == 0:
         curr_angle += find_angle(previous_frame, current_frame, cam_matrix)
-        curr_angle += 0
         if print_angle:
             print("Angle: {}".format(curr_angle))
     
@@ -139,7 +141,7 @@ while True:
             top_left = max_loc
             h, w, _ = current_frame.shape
             bottom_right = (top_left[0] + w, top_left[1] + h)
-            cv2.rectangle(pp_copy, top_left, bottom_right, (0, 0, 255), 2)
+            cv2.rectangle(pp_copy, top_left, bottom_right, (0, 0, 255), 8)
             cv2.imshow('Panorama', pp_copy)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -150,16 +152,14 @@ while True:
                 previoush,previousw,_ = previous_pano.shape
 
             direction = 1 if curr_angle < min_angle - ANGLE_DIFF_THRESHOLD else 0
-            mask = res['mask'] *255
+            mask = res['mask'] * 255
             mask_inv = cv2.bitwise_not(mask)   
             img_fg = cv2.bitwise_and(current_frame,current_frame,mask =mask_inv)
-            panorama = pano(img_fg,previous_pano, direction,0)
+            panorama = create_panorama(img_fg,previous_pano, direction, cam_matrix)
             if panorama is not None:
                 h,w,_ = panorama.shape
                 if (h - previoush < 20 or w - previousw < 50):
                     previous_pano = panorama
-                else:
-                    print("warp failed")
 
         
         if curr_angle > max_angle + ANGLE_DIFF_THRESHOLD:
@@ -204,6 +204,14 @@ while True:
 if save_video:
     print('Video saved to {}'.format(file_name))
     outputStream.release()
+
+if show_panorama:
+    cv2.imwrite('results/panorama_' + path.split('/')[-1] + '.png', previous_pano)
+    try:
+        pano_cropped = crop_pano(previous_pano)
+        cv2.imwrite('results/panorama_cropped_' + path.split('/')[-1] + '.png', pano_cropped)
+    except:
+        print("Failed to crop panorama")
 
 if save_bbox:
     jw.close()

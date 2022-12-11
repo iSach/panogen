@@ -1,5 +1,13 @@
+from statistics import mode     #some imports
+
+import time
 import cv2 as cv2
 import numpy as np
+import matplotlib.pyplot as plt
+import os
+import argparse
+import math
+import glob
 import imutils
 
 sampling_span = 5
@@ -130,6 +138,9 @@ def create_mosaic(images, origins):
     # zip origins and images together
     zipped = list(zip(origins, images))
     
+    # sort by distance from origin (highest to lowest)
+    func = lambda x: math.sqrt(x[0][0] ** 2 + x[0][1] ** 2)
+    dist_sorted = sorted(zipped, key=func, reverse=True)
     # sort by x value
     x_sorted = sorted(zipped, key=lambda x: x[0][0])
     # sort by y value
@@ -164,37 +175,48 @@ def create_mosaic(images, origins):
     # new frame of panorama
     stitch = np.zeros((total_height, total_width, 4), np.uint8)
 
+    index = 0
+    position = []
+    # stitch images into frame by order of distance
+    for image in dist_sorted:
+        offset_y = image[0][1] + cent_y
+        offset_x = image[0][0] + cent_x
+        end_y = offset_y + image[1].shape[0]
+        end_x = offset_x + image[1].shape[1]
+
+        stitch_cur = stitch[offset_y:end_y, offset_x:end_x, :4]
+        stitch_cur[image[1]>0] = image[1][image[1]>0]
+        index +=1
+        if index == 2:
+            position.append((offset_x,offset_y)) 
+            position.append((end_x,end_y)) 
+
     return stitch
 
-def create_panorama(image,previous,direction):
-    
-    h,w,_ = image.shape
-    f = 1000
-    H = np.array([[f, 0, w/2], [0, f, h/2], [0, 0, 1]])
-    
-    image = cylindrical_warp_image(image , H)
-    if previous is None:
-        return image
-
-    if direction == 1:
-        M = compute_homography(previous, image)
-        if M is None:
-            return previous
-        image_warped, image_origin = warp_image(previous, M)
-        
-        return create_mosaic([image_warped, image], [image_origin, (0,0)])
-    else : 
-        M = compute_homography(image, previous)
-        if M is None:
-            return previous
-        image_warped, image_origin = warp_image(image, M)
-        
-        return create_mosaic([image_warped, previous], [image_origin, (0,0)])
-
-
-def pano(img_fg,previous,direction,pos):
+def create_panorama(image,previous,direction, cam_matrix):
     try:
-        return create_panorama(img_fg,previous,direction,pos)
+        h,w,_ = image.shape
+        f = cam_matrix[0,0]
+        H = np.array([[f, 0, w/2], [0, f, h/2], [0, 0, 1]])
+        
+        image = cylindrical_warp_image(image , H)
+        if previous is  None :
+            return image
+
+        if direction == 1:
+            M = compute_homography(previous, image)
+            if M is None:
+                return previous
+            image_warped, image_origin = warp_image(previous, M)
+            
+            return create_mosaic([image_warped, image], [image_origin, (0,0)])
+        else : 
+            M = compute_homography(image, previous)
+            if M is None:
+                return previous
+            image_warped, image_origin = warp_image(image, M)
+            
+            return create_mosaic([image_warped, previous], [image_origin, (0,0)])
     except:
         print('Panorama failed.')
         return None
