@@ -121,8 +121,9 @@ while True:
     if current_frame is None:
         break
     
-    res = md.detect(current_frame, size=640)
-    boxes = res['boxes']
+    if show_bbox or save_bbox:
+        res = md.detect(current_frame, size=640)
+        boxes = res['boxes']
 
     if save_bbox:
         jw.write_frame(frame_count, boxes, md)
@@ -156,8 +157,11 @@ while True:
             if previous_pano is not None:
                 previoush,previousw,_ = previous_pano.shape
 
-            direction = 1 if curr_angle < min_angle - ANGLE_DIFF_THRESHOLD else 0
+            if not show_bbox:
+                res = md.detect(current_frame, size=640)
             mask = res['mask'] * 255
+
+            direction = 1 if curr_angle < min_angle - ANGLE_DIFF_THRESHOLD else 0
             mask_inv = cv2.bitwise_not(mask)   
             img_fg = cv2.bitwise_and(current_frame,current_frame,mask =mask_inv)
             panorama = create_panorama(img_fg,previous_pano, direction, cam_matrix)
