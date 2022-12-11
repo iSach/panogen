@@ -1,55 +1,11 @@
-from statistics import mode     #some imports
-
-import time
 import cv2 as cv2
 import numpy as np
-import matplotlib.pyplot as plt
-import os
-import argparse
 import math
-import glob
 import imutils
+from anglemeter import compute_homography
 
 sampling_span = 5
 condition_treshold = 0.5
-
-
-def compute_homography(image1, image2):
-    """
-    Detect and match features between image1 and image2
-    Using ORB as the detector
-    and homography to find objects
-    Returns: perspective transformation between two planes
-    """
-    # Initiate ORB
-    orb = cv2.ORB_create()
-    kp1, des1 = orb.detectAndCompute(image1, None)
-    kp2, des2 = orb.detectAndCompute(image2, None)
-    des1, des2 = np.float32(des1), np.float32(des2)
-    
-    # Match features with FLANN.
-    FLANN_INDEX_KDTREE = 1
-    index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
-    search_params = dict(checks = 50)
-    flann = cv2.FlannBasedMatcher(index_params, search_params)
-    matches = flann.knnMatch(np.asarray(des1,np.float32),np.asarray(des2,np.float32),k=2)
-
-    # Lowe's ratio test
-    good = []
-    for m, n in matches:
-        if m.distance < 0.7 * n.distance:
-            good.append(m)
-
-    src_pts = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1,1,2)
-    dst_pts = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1,1,2)
-
-    if len(src_pts) < 4 or len(dst_pts) < 4:
-        return 0
-
-    M, _ = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
-
-    return M
-
 
 def warp_image(image, H):
 
@@ -133,8 +89,18 @@ def cylindrical_warp_image(img, H):
     # warp the image according to cylindrical coords
     return cv2.remap(img_rgba, B[:,:,0].astype(np.float32), B[:,:,1].astype(np.float32), cv2.INTER_AREA, borderMode=cv2.BORDER_CONSTANT, borderValue=(0,0,0,0))
 
+# https://github.com/tsherlock/panorama/blob/master/pano_stitcher.py
 def create_mosaic(images, origins):
-    
+    """
+    Combine multiple images into a mosaic.
+    Arguments:
+    images: a list of 4-channel images to combine in the mosaic.
+    origins: a list of the locations upper-left corner of each image in
+    a common frame, e.g. the frame of a central image.
+    Returns: a new 4-channel mosaic combining all of the input images. pixels
+    in the mosaic not covered by any input image should have their
+    alpha channel set to zero.
+    """
     # zip origins and images together
     zipped = list(zip(origins, images))
     
@@ -175,8 +141,6 @@ def create_mosaic(images, origins):
     # new frame of panorama
     stitch = np.zeros((total_height, total_width, 4), np.uint8)
 
-    index = 0
-    position = []
     # stitch images into frame by order of distance
     for image in dist_sorted:
         offset_y = image[0][1] + cent_y
@@ -186,10 +150,6 @@ def create_mosaic(images, origins):
 
         stitch_cur = stitch[offset_y:end_y, offset_x:end_x, :4]
         stitch_cur[image[1]>0] = image[1][image[1]>0]
-        index +=1
-        if index == 2:
-            position.append((offset_x,offset_y)) 
-            position.append((end_x,end_y)) 
 
     return stitch
 
