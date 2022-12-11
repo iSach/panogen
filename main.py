@@ -7,8 +7,8 @@ import time
 from tqdm import tqdm
 from calibration import get_camera_matrix
 from anglemeter import find_angle
-from panorama2 import create_panorama
-from panorama2 import crop_pano
+from panorama import create_panorama
+from panorama import crop_pano
 
 # Parse arguments
 parser = ArgumentParser()
