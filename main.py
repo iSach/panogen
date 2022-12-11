@@ -1,5 +1,4 @@
 import cv2
-import torch
 from motion_detection import MotionDetector
 from argparse import ArgumentParser
 from feed_reader import VideoFeedReader
@@ -45,6 +44,8 @@ parser.add_argument('-pan', '--panorama', type=lambda x: (str(x).lower() == 'tru
 parser.add_argument('-sb', '--showbbox', type=lambda x: (str(x).lower() == 'true'), default=True, help='Show bounding boxes and angle on video')
 # Begin at frame:
 parser.add_argument('-b', '--begin', type=int, default=0, help='Begin at frame')
+# Max frames
+parser.add_argument('-mf', '--maxframes', type=int, default=-1, help='Max frames')
 
 # Argument values
 args = parser.parse_args()
@@ -64,6 +65,7 @@ save_bbox = args.savejson
 show_panorama = args.panorama
 show_bbox = args.showbbox
 begin_frame = args.begin
+max_frames = args.maxframes
 
 # Calibrate camera, no matter the parameters.
 cam_matrix = get_camera_matrix()
@@ -109,6 +111,9 @@ min_angle = -ANGLE_DIFF_THRESHOLD
 max_angle = ANGLE_DIFF_THRESHOLD
 
 while True:
+    if max_frames != -1 and frame_count >= max_frames:
+        break
+    
     # Read frame
     current_frame = vfr.read()
 
