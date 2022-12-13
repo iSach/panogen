@@ -3,7 +3,15 @@ import numpy as np
 
 def compute_homography(image1, image2):
     """
-    Computes and returns the homography between two images.
+    Computes the homography between two images.
+    Args:
+        image_a: A grayscale input image.
+        image_b: A second input image that overlaps with image_a.
+       
+    Returns:
+        The 3x3 perspective transformation matrix
+             mapping points in image_b to corresponding points in image_a.
+    
     """
     # Initiate ORB
     orb = cv2.ORB_create()
