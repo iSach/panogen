@@ -2,7 +2,7 @@ zip release.zip \
     README.md \
     anglemeter.py \
     calibration.py \
-    data/calibration/*
+    data/calibration/* \
     evaluation.ipynb \
     feed_reader.py \
     json_writer.py \

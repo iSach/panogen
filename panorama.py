@@ -7,8 +7,8 @@ from anglemeter import compute_homography
 sampling_span = 5
 condition_treshold = 0.5
 
+# https://github.com/tsherlock/panorama/blob/master/pano_stitcher.py
 def warp_image(image, H):
-
     image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
     h, w, _ = image.shape
 
@@ -153,7 +153,7 @@ def create_mosaic(images, origins):
 
     return stitch
 
-def create_panorama(image,previous,direction, cam_matrix):
+def create_panorama(image, previous, direction, cam_matrix):
     try:
         h,w,_ = image.shape
         f = cam_matrix[0,0]
