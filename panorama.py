@@ -7,8 +7,16 @@ from anglemeter import compute_homography
 sampling_span = 5
 condition_treshold = 0.5
 
-# https://github.com/tsherlock/panorama/blob/master/pano_stitcher.py
 def warp_image(image, H):
+    """
+    Applies a perspective transformation to an image using the source matrix H.
+    Returns the 4-channel warped image (4th channel is alpha channel of empty pixels)
+    and location of the warped image's upper-left corner in the target space of 'homography'.
+    
+    Source :
+    https://github.com/tsherlock/panorama/blob/master/pano_stitcher.py
+    """
+    
     image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
     h, w, _ = image.shape
 
@@ -36,46 +44,66 @@ def warp_image(image, H):
 
     return warped, (int(xmin), int(ymin))
 
-# https://pyimagesearch.com/2018/12/17/image-stitching-with-opencv-and-python/
-def crop_pano(output):
-    stitched = cv2.copyMakeBorder(output, 10, 10, 10, 10,
+def crop_pano(image):
+    """"
+    Crop a rectangle image from the panorama to get rid of black borders.
+    
+    Source :
+    https://pyimagesearch.com/2018/12/17/image-stitching-with-opencv-and-python/
+    """
+    # 10 pixel border surrounding the stitched image
+    pano = cv2.copyMakeBorder(image, 10, 10, 10, 10,
         cv2.BORDER_CONSTANT, (0, 0, 0))
-    gray = cv2.cvtColor(stitched, cv2.COLOR_BGR2GRAY)
+    
+    # treshold the image such that all pixels greater than zero are set to 255 (mask of non black pixels)
+    gray = cv2.cvtColor(pano, cv2.COLOR_BGR2GRAY)
     thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY)[1]
+    
+    # find the largest external contours of the mask
     cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     c = max(cnts, key=cv2.contourArea)
+    
+    # create the mask of the rectangular bounding box
     mask = np.zeros(thresh.shape, dtype="uint8")
     (x, y, w, h) = cv2.boundingRect(c)
     cv2.rectangle(mask, (x, y), (x + w, y + h), 255, -1)
-    minRect = mask.copy()
-    sub = mask.copy()
+    
+    # 2 copies of the mask 
+    minRect = mask.copy() # Minimum rectangular mask
+    sub = mask.copy()     # to know if we need to keep decreasing the size of the mask
+    
+    # loop to find the rectangle within the tresholded image
     while cv2.countNonZero(sub) > 0:
+        # erode the minimum rectangular mask and 
+        # subtract the thresholded image from the minimum rectangular mask
         minRect = cv2.erode(minRect, None)
         sub = cv2.subtract(minRect, thresh)
-    cnts = cv2.findContours(minRect.copy(), cv2.RETR_EXTERNAL,
-        cv2.CHAIN_APPROX_SIMPLE)
+    
+    # contours of the minimum rectangular mask and bouding box
+    cnts = cv2.findContours(minRect.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     c = max(cnts, key=cv2.contourArea)
     (x, y, w, h) = cv2.boundingRect(c)
-    stitched = stitched[y:y + h, x:x + w]
-    stitched = cv2.resize(stitched, (1280, 720))
+    
+    # crop the image using the bounding box and resize it. 
+    croppedPano = pano[y:y + h, x:x + w]
+    croppedPano = cv2.resize(croppedPano, (1280, 720))
 
-    return stitched
+    return croppedPano
 
 
 # https://gist.github.com/royshil/0b21e8e7c6c1f46a16db66c384742b2b
 def cylindrical_warp_image(img, H):
     """
-    returns the cylindrical warp for a given image and intrinsics matrix H
-    
+    Returns the cylindrical warp for a given image and intrinsics matrix H
     """
     h, w = img.shape[:2]
     # pixel coordinates
     y_i, x_i = np.indices((h, w))
     X = np.stack([x_i,y_i,np.ones_like(x_i)],axis=-1).reshape(h*w, 3) # to homog
     Hinv = np.linalg.inv(H) 
-    X = Hinv.dot(X.T).T # normalized coords
+    X = Hinv.dot(X.T).T # normalized coordss
     # calculate cylindrical coords (sin\theta, h, cos\theta)
     A = np.stack([np.sin(X[:,0]),X[:,1],np.cos(X[:,0])],axis=-1).reshape(w*h, 3)
     B = H.dot(A.T).T # project back to image-pixels plane
@@ -154,6 +182,10 @@ def create_mosaic(images, origins):
     return stitch
 
 def create_panorama(image, previous, direction, cam_matrix):
+    """"
+    Create panorama from two images
+    It uses cylindrical projection to warp the image
+    """
     try:
         h,w,_ = image.shape
         f = cam_matrix[0,0]
