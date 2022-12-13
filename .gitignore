@@ -2,6 +2,7 @@ data/img_5_1/
 data/img_5_2/
 data/ref_5_1/
 data/ref_5_2/
+data/pres2/
 data/eval/
 *.pt
 *.mp4
