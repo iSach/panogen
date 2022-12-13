@@ -1,0 +1,18 @@
+Montrer juste Bounding Boxes :
+
+python3 main.py -o false -p data/pres2/pres2_ -sb true -s 25
+
+Offline sur pres2 sans BB:
+
+python3 main.py -o false -p data/pres2/pres2_ -pan true -sb false -s 7
+
+Online :
+
+python3 main.py -o true -pan true -sb false -s 15
+
+
+-------------------------------------------------------------------------
+
+Séquence d'évaluation : 
+
+python3 main.py -o false -p data/eval/frame_ -f false -ff png -s 4 -pan true -sb true -sd 7 -bd 23

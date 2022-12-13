@@ -38,20 +38,22 @@ Where the parameters are showed in the following table.
 
 | Parameter   | Short name  | Description | Values |
 | ----------- | ----------- | ----------- | ----------- |
-| `--content` | `-c` | Content file (name of file in folder `content`) | String |
-| `--style` | `-s` | Style image (name of file in folder `style`) | String |
-| `--output` | `-o` | Output file (name of file in folder `result`) | String |
-| `--content_weight` | `-w` | Content weight | Float (def. `1`) |
-| `--style_weight` | `-y` | Style weight | Float (def. `1`) |
-| `--resize` | `-z` | Maximum dimension of an image | Integer (def. `512`) |
-| `--temporal_loss` | `-T` | Use temporal loss? | Boolean (def. `true`) |
-| `--temporal_weight` | `-W` | Temporal loss weight | Float (def. `1`) |
-| `--target_start` | `-I` | Start from content or white noise | `content` (def.) or `random` |
-| `--start_from_prev` | `-p` | Start from previous stylized frame warped | Boolean (def. `true`) |
-| `--style_from_prev` | `-Y` | Style current frame using previous stylized frame | Boolean (def. `false`) |
-| `--iters` | `-i` | Number of iterations for optimizing one frame | Integer (def. `300`) |
-| `--optimizer` | `-a` | Optimizer algorithm | `lbfgs` (def) or `adam` |
-| `--early-stopping` | `-e` | Stop early when good convergence | Boolean (def. `false`) |
+| `--online` | `-o` | Capture mode, online? (Live) | bool (def. `True`) |
+| `--path` | `-p` | Prefix path to sequence images | str (def. `data/img_5_1/img_5_1_`) |
+| `--savevideo` | `-sv` | Save video? | bool (def. `True`) |
+| `--displayvideo` | `-dv` | Display the video? | bool (def. `True`) |
+| `--skip` | `-s` | Nb. of frames between two updates of the angle estimation | int (def. `0`) |
+| `--print` | `-d` | Print the angle estimation in console? | bool (def. `False`) |
+| `--padcount` | `-f` | Should pad frames ids? (0047 vs 47) | bool (def. `True`) |
+| `--format` | `-ff` | Images format | str (def. `jpg`) |
+| `--model` | `-m` | YOLO model to use for detection | str (def. `yolov5n`) |
+| `--smalldiameter` | `-sd` | Small ball diameter in cm. | float (def. `10.5`) |
+| `--bigdiameter` | `-bd` | Big ball diameter in cm. | float (def. `23.8`) |
+| `--savejson` | `-sj` | Save Bounding Boxes to a JSON file? | bool (def. `True`) |
+| `--panorama` | `-pan` | Generate a panorama? | bool (def. `False`) |
+| `--showbbox` | `-sb` | Show bounding boxes on video? | bool (def. ``) |
+| `--begin` | `-b` | First frame to start from | int (def. `0`) |
+| `--maxframes` | `-mf` | Maximum number of frames (-1 for no limit) | int (def. `-1`) |
 
 ## Modules
 

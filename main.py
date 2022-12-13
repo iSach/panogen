@@ -136,11 +136,11 @@ while True:
         # Update the previous frame
         previous_frame = current_frame.copy()
 
-    # Position of current_frame in panorama
-    if frame_count % 25 == 0 and show_panorama:
+    # 25 is too slow on board, changed to 50 (was 25 on poster)
+    if frame_count % 50 == 0:
+        # Position of current_frame in panorama
         if previous_pano is not None:
             pp_copy = previous_pano.copy()
-            # pp_copy = crop_pano(pp_copy)
             pp_copy = cv2.cvtColor(pp_copy, cv2.COLOR_BGRA2BGR)
             mt = cv2.matchTemplate(pp_copy, current_frame, cv2.TM_CCOEFF_NORMED)
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(mt)
@@ -196,7 +196,7 @@ while True:
                 cv2.putText(current_frame, txt, (box[0], box[1] + 16), font, 0.8, color, lineType)
                 cv2.rectangle(current_frame, (box[0], box[1]), (box[2], box[3]), color, 2)
 
-            cv2.putText(current_frame, str(round(curr_angle, 3)), (50,90), font, 1.7, fontColor, lineType)
+        cv2.putText(current_frame, str(round(curr_angle, 3)), (50,90), font, 1.7, fontColor, lineType)
                     
         # Display the resulting frame
         cv2.imshow('Frame', current_frame)
@@ -215,12 +215,20 @@ if save_video:
     outputStream.release()
 
 if show_panorama:
-    cv2.imwrite('results/panorama_' + path.split('/')[-1] + '.png', previous_pano)
-    try:
-        pano_cropped = crop_pano(previous_pano)
-        cv2.imwrite('results/panorama_cropped_' + path.split('/')[-1] + '.png', pano_cropped)
-    except:
-        print("Failed to crop panorama")
+    if not online:
+        cv2.imwrite('results/panorama_' + path.split('/')[-1] + '.png', previous_pano)
+        try:
+            pano_cropped = crop_pano(previous_pano)
+            cv2.imwrite('results/panorama_cropped_' + path.split('/')[-1] + '.png', pano_cropped)
+        except:
+            print("Failed to crop panorama")
+    else:
+        cv2.imwrite('results/panorama.png', previous_pano)
+        try:
+            pano_cropped = crop_pano(previous_pano)
+            cv2.imwrite('results/panorama_cropped.png', pano_cropped)
+        except:
+            print("Failed to crop panorama")
 
 if save_bbox:
     jw.close()

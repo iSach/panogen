@@ -21,6 +21,10 @@ class VideoFeedReader:
 			self.cap = cv2.VideoCapture(gst_str, cv2.CAP_GSTREAMER)
 
 	def read(self):
+		"""
+		Reads the next frame from the video feed
+		:return: the next frame
+		"""
 		if self.online:
 			ret, frame = self.cap.read()
 			if self.in_color:
@@ -38,5 +42,8 @@ class VideoFeedReader:
 				return None
 
 	def release(self):
+		"""
+		Releases the video feed
+		"""
 		if self.online:
 			self.cap.release()

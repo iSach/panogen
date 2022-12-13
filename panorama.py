@@ -93,10 +93,11 @@ def crop_pano(image):
     return croppedPano
 
 
-# https://gist.github.com/royshil/0b21e8e7c6c1f46a16db66c384742b2b
 def cylindrical_warp_image(img, H):
     """
     Returns the cylindrical warp for a given image and intrinsics matrix H
+
+    Source: https://gist.github.com/royshil/0b21e8e7c6c1f46a16db66c384742b2b
     """
     h, w = img.shape[:2]
     # pixel coordinates
@@ -117,7 +118,7 @@ def cylindrical_warp_image(img, H):
     # warp the image according to cylindrical coords
     return cv2.remap(img_rgba, B[:,:,0].astype(np.float32), B[:,:,1].astype(np.float32), cv2.INTER_AREA, borderMode=cv2.BORDER_CONSTANT, borderValue=(0,0,0,0))
 
-# https://github.com/tsherlock/panorama/blob/master/pano_stitcher.py
+
 def create_mosaic(images, origins):
     """
     Combine multiple images into a mosaic.
@@ -128,6 +129,8 @@ def create_mosaic(images, origins):
     Returns: a new 4-channel mosaic combining all of the input images. pixels
     in the mosaic not covered by any input image should have their
     alpha channel set to zero.
+
+    Source: https://github.com/tsherlock/panorama/blob/master/pano_stitcher.py
     """
     # zip origins and images together
     zipped = list(zip(origins, images))

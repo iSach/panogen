@@ -3,6 +3,12 @@ from argparse import ArgumentParser
 from feed_reader import VideoFeedReader
 import os
 
+"""
+Allows to record a sequence and saves each frame to a folder.
+
+Usage: python record.py -n <name> -m <max frames>
+"""
+
 # Parse arguments
 parser = ArgumentParser()
 # Path to the folder containing the images (offline mode only)
