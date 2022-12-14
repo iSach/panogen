@@ -1,3 +1,6 @@
+sudo /usr/bin/jetson_clocks --fan
+
+
 Montrer juste Bounding Boxes :
 
 python3 main.py -o false -p data/pres2/pres2_ -sb true -s 25
