@@ -8,7 +8,7 @@ In this project, we present an application for three tasks.
 
 Along with that, the application allows for a lot of different features, that can be tweaked with parameters when running it. This includes exporting bounding boxes to a JSON file, displaying the angle, the bounding boxes and ball distances, changing the detection model to increase speed or accuracy, saving the video, etc.
 
-This project is developed during the Computer Vision (ELEN0016) class at University of Liège, during Fall 2022.
+This project is developed during the Computer Vision (ELEN0016) class at University of Liège, during Fall 2022. It received the grade of `20/20`.
 
 The group members are, in alphabetical order:
 - La Rocca Lionel
